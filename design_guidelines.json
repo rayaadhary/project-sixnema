@@ -1,0 +1,79 @@
+{
+  "app_name": "sixnema",
+  "app_title": "Sixnema - Ekskul Fotografi & Videografi SMP Muhammadiyah 6 Surabaya",
+  "context": "mobile_web_app",
+  "target_audience": "Students, Instructor, and School Principal (Waka Kesiswaan) of SMP Muhammadiyah 6 Surabaya",
+  "emotional_tone": "Creative, cinematic, professional yet energetic, youth-oriented dark mode with electric yellow accents",
+  "typography": {
+    "heading_font": "Space Grotesk, sans-serif",
+    "body_font": "Inter, sans-serif",
+    "weights": ["300", "400", "500", "600", "700"],
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl font-bold tracking-tight",
+      "h2": "text-2xl sm:text-3xl font-bold tracking-tight",
+      "h3": "text-xl sm:text-2xl font-semibold",
+      "body": "text-base text-gray-300"
+    }
+  },
+  "colors": {
+    "primary": "#FACC15",
+    "primary_hover": "#EAB308",
+    "background_dark": "#0B0F19",
+    "card_background": "#111827",
+    "border_color": "#1F2937",
+    "text_main": "#F9FAFB",
+    "text_muted": "#9CA3AF",
+    "accent": "#F59E0B"
+  },
+  "roles": [
+    {
+      "role": "pembina",
+      "name": "Ustadz Arifin, S.Pd",
+      "title": "Pembina Ekskul",
+      "demo_email": "pembina@sixnema.smpmusix.sch.id",
+      "demo_password": "pembina123"
+    },
+    {
+      "role": "siswa",
+      "name": "Ahmad Zaki Al-Farizi",
+      "title": "Siswa Kelas 8 (No. 1 dari 15 Siswa)",
+      "demo_email": "siswa@sixnema.smpmusix.sch.id",
+      "demo_password": "siswa123"
+    },
+    {
+      "role": "waka",
+      "name": "Drs. H. M. Fauzi",
+      "title": "Waka Kesiswaan",
+      "demo_email": "waka@sixnema.smpmusix.sch.id",
+      "demo_password": "waka123"
+    }
+  ],
+  "grading_formula": {
+    "theory_weight": 0.4,
+    "artwork_weight": 0.6
+  },
+  "image_urls": [
+    {
+      "category": "hero_photography",
+      "url": "https://images.unsplash.com/photo-1513031300226-c8fb12de9ade?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA0MTJ8MHwxfHNlYXJjaHwxfHxwaG90b2dyYXBoeSUyMHNjaG9vbCUyMHN0dWRlbnRzJTIwY2FtZXJhfGVufDB8fHx8MTc4NjYzMTE2OHww&ixlib=rb-4.1.0&q=85",
+      "description": "Student taking photo with camera in shallow focus"
+    },
+    {
+      "category": "studio_setup",
+      "url": "https://images.unsplash.com/photo-1471341971476-ae15ff5dd4ea?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njl8MHwxfHNlYXJjaHwxfHxjaW5lbWF0aWMlMjBkYXJrJTIwcGhvdG9ncmFwaHklMjBzdHVkaW98ZW58MHx8fHwxNzg2NjMxMTY4fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Cinematic dark studio setup"
+    },
+    {
+      "category": "student_action",
+      "url": "https://images.unsplash.com/photo-1567531708788-4c44105d00ff?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA0MTJ8MHwxfHNlYXJjaHwyfHxwaG90b2dyYXBoeSUyMHNjaG9vbCUyMHN0dWRlbnRzJTIwY2FtZXJhfGVufDB8fHx8MTc4NjYzMTE2OHww&ixlib=rb-4.1.0&q=85",
+      "description": "Student with DSLR camera"
+    }
+  ],
+  "universal_guidelines": {
+    "no_transparent_overlays_without_blur": true,
+    "interactive_elements_testid": true,
+    "no_universal_transition": true,
+    "no_center_align_app_container": true,
+    "toast_notification": "sonner"
+  }
+}
