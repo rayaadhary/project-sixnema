@@ -10,9 +10,9 @@ const DEMO_CREDENTIALS = {
 };
 
 const ROLE_CARDS = [
-  { role: 'pembina', label: 'Pembina', sub: 'Ustadz Arifin, S.Pd', Icon: UserCheck, testid: 'demo-pembina-btn' },
-  { role: 'siswa', label: 'Siswa', sub: 'Ahmad Zaki (15 Siswa)', Icon: GraduationCap, testid: 'demo-siswa-btn' },
-  { role: 'waka', label: 'Waka Kesiswaan', sub: 'Drs. H. M. Fauzi', Icon: Shield, testid: 'demo-waka-btn' },
+  { role: 'pembina', label: 'Pembina', sub: 'Adek Dharma Santoso, S.I.Kom, M.AP', Icon: UserCheck, testid: 'demo-pembina-btn' },
+  { role: 'siswa', label: 'Siswa', sub: 'Wali Murid / Siswa', Icon: GraduationCap, testid: 'demo-siswa-btn' },
+  { role: 'waka', label: 'Waka Kesiswaan', sub: 'Afika Amalia, S.Pd, Gr', Icon: Shield, testid: 'demo-waka-btn' },
 ];
 
 export default function AuthScreen({ onAuthenticated }) {
@@ -69,16 +69,16 @@ export default function AuthScreen({ onAuthenticated }) {
         <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-7 space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs font-medium">
-              <Sparkles className="w-3.5 h-3.5" /> Portal Kreatif Sinematik & Fotografi
+              <Sparkles className="w-3.5 h-3.5" /> Ekstrakurikuler Fotografi & Sinematografi
             </div>
             <h2 className="text-4xl sm:text-5xl font-black tracking-tight leading-tight text-white">
-              Abadikan Momen, <br />
+              SIXNEMA, <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-300 to-yellow-500">
-                Ciptakan Karya Bermakna.
+               SIXNEMA SMP MUHAMMADIYAH 6 SURABAYA.
               </span>
             </h2>
             <p className="text-gray-300 text-base sm:text-lg leading-relaxed max-w-xl">
-              Sistem manajemen terpadu ekstrakurikuler Fotografi & Videografi SMP Muhammadiyah 6 Surabaya. Absensi cepat, penilaian objektif (Teori 40% + Karya 60%), jurnal pengajaran, dan pemantauan langsung Waka Kesiswaan.
+              Sistem manajemen terpadu ekstrakurikuler Fotografi & Videografi SMP Muhammadiyah 6 Surabaya. Absensi cepat, penilaian objektif (Teori 40% + Karya 60%), jurnal pengajaran, dan Website sistem Management terpadu ekstrakurikuler & Sinematografi SMP Muhammadiyah 6 Surabaya, Jurnal, Absensi dan Karya semua terintegrasi dengan baik melalui Aplikasi SixnemaApps.
             </p>
 
             <div className="pt-4">
@@ -109,7 +109,7 @@ export default function AuthScreen({ onAuthenticated }) {
             <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/5 rounded-full blur-3xl pointer-events-none"></div>
             <div className="mb-6">
               <h3 className="text-xl font-bold text-white">Masuk ke Akun Sixnema</h3>
-              <p className="text-xs text-gray-400 mt-1">Gunakan kredensial akun demo atau email terdaftar</p>
+              <p className="text-xs text-gray-400 mt-1">Gunakan kredensial akun atau email terdaftar</p>
             </div>
 
             <form onSubmit={handleCustomLogin} className="space-y-4">
@@ -147,7 +147,7 @@ export default function AuthScreen({ onAuthenticated }) {
             </form>
 
             <div className="mt-6 pt-6 border-t border-gray-800 text-center">
-              <p className="text-xs text-gray-400">Didukung oleh OSIS & Tim IT SMP Muhammadiyah 6 Surabaya</p>
+              <p className="text-xs text-gray-400">Sistem oleh Filmuda Academy</p>
             </div>
           </div>
         </div>
