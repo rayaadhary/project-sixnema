@@ -16,9 +16,11 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field
 from starlette.middleware.cors import CORSMiddleware
 
-MONGO_URL = os.environ["MONGO_URL"]
-DB_NAME = os.environ["DB_NAME"]
-JWT_SECRET = os.environ["JWT_SECRET"]
+MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
+DB_NAME = os.environ.get("DB_NAME", "sixnema")
+JWT_SECRET = os.environ.get("JWT_SECRET", "dev-secret-change-me")
+FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "http://localhost:3000")
+# ponytail: motor client is lazy (no I/O until first query), so module-level is fine for serverless cold starts.
 client = AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]
 JWT_ALGORITHM = "HS256"
@@ -164,9 +166,9 @@ INITIAL_FEEDBACK = [
 
 async def seed_users():
     accounts = [
-        {"id": "user-pembina", "email": os.environ["DEMO_PEMBINA_EMAIL"], "password": os.environ["DEMO_PEMBINA_PASSWORD"], "name": "Ustadz Arifin, S.Pd", "title": "Pembina Ekskul Fotografi & Videografi", "role": "pembina"},
-        {"id": "user-siswa",   "email": os.environ["DEMO_SISWA_EMAIL"],   "password": os.environ["DEMO_SISWA_PASSWORD"],   "name": "Ahmad Zaki Al-Farizi", "title": "Siswa Ekskul (Kelas 8A)", "role": "siswa", "student_id": "student-1"},
-        {"id": "user-waka",    "email": os.environ["DEMO_WAKA_EMAIL"],    "password": os.environ["DEMO_WAKA_PASSWORD"],    "name": "Drs. H. M. Fauzi", "title": "Waka Kesiswaan SMP Muhammadiyah 6 Surabaya", "role": "waka"},
+        {"id": "user-pembina", "email": os.environ.get("DEMO_PEMBINA_EMAIL", "pembina@sixnema.id"), "password": os.environ.get("DEMO_PEMBINA_PASSWORD", "demo-pembina"), "name": "Ustadz Arifin, S.Pd", "title": "Pembina Ekskul Fotografi & Videografi", "role": "pembina"},
+        {"id": "user-siswa",   "email": os.environ.get("DEMO_SISWA_EMAIL", "siswa@sixnema.id"),   "password": os.environ.get("DEMO_SISWA_PASSWORD", "demo-siswa"),   "name": "Ahmad Zaki Al-Farizi", "title": "Siswa Ekskul (Kelas 8A)", "role": "siswa", "student_id": "student-1"},
+        {"id": "user-waka",    "email": os.environ.get("DEMO_WAKA_EMAIL", "waka@sixnema.id"),    "password": os.environ.get("DEMO_WAKA_PASSWORD", "demo-waka"),    "name": "Drs. H. M. Fauzi", "title": "Waka Kesiswaan SMP Muhammadiyah 6 Surabaya", "role": "waka"},
     ]
     for account in accounts:
         doc = {**account, "password_hash": bcrypt.hashpw(account.pop("password").encode(), bcrypt.gensalt()).decode()}
@@ -210,17 +212,8 @@ async def seed_feedback():
     for f in INITIAL_FEEDBACK:
         await db.feedback.update_one({"id": f["id"]}, {"$setOnInsert": f}, upsert=True)
 
-@app.on_event("startup")
-async def startup():
-    await db.users.create_index("email", unique=True)
-    await db.grade_snapshots.create_index([("student_id", 1), ("created_at", 1)])
-    await db.attendance.create_index("date")
-    await seed_users()
-    await seed_students()
-    await seed_grade_history()
-    await seed_journals()
-    await seed_artworks()
-    await seed_feedback()
+# Seeding & index creation moved to seed.py (run once manually against Atlas).
+# Kept here as importable helpers. serverless: no startup lifecycle guarantees.
 
 # ---------- Auth ----------
 @api.get("/health")
@@ -444,8 +437,4 @@ async def export_journals(user=Depends(require_roles("pembina", "waka"))):
     return stream_csv(rows, "sixnema-jurnal.csv")
 
 app.include_router(api)
-app.add_middleware(CORSMiddleware, allow_origins=[os.environ["FRONTEND_ORIGIN"]], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
-
-@app.on_event("shutdown")
-async def shutdown():
-    client.close()
+app.add_middleware(CORSMiddleware, allow_origins=[FRONTEND_ORIGIN], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
