@@ -222,7 +222,7 @@ async def health():
 
 @api.post("/auth/login", response_model=UserOut)
 async def login(payload: LoginInput, response: Response):
-    user = await db.users.find_one({"email": payload.email.lower()}, {"_id": 0})
+    user = await db.users.find_one({"email": payload.email.strip().lower()}, {"_id": 0})
     if not user or not bcrypt.checkpw(payload.password.encode(), user["password_hash"].encode()):
         raise HTTPException(401, "Email atau kata sandi salah")
     response.set_cookie("access_token", token_for(user), httponly=True, secure=True, samesite="none", max_age=28800)

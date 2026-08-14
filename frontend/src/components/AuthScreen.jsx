@@ -39,11 +39,12 @@ export default function AuthScreen({ onAuthenticated }) {
 
   const handleCustomLogin = (e) => {
     e.preventDefault();
-    if (!loginEmail || !loginPassword) {
+    const email = loginEmail.trim();
+    if (!email || !loginPassword) {
       toast.error('Isi email dan kata sandi terlebih dahulu.');
       return;
     }
-    performLogin(loginEmail, loginPassword);
+    performLogin(email, loginPassword);
   };
 
   return (
