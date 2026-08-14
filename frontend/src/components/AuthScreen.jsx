@@ -76,11 +76,11 @@ export default function AuthScreen({ onAuthenticated }) {
             <h2 className="text-4xl sm:text-5xl font-black tracking-tight leading-tight text-white">
               SIXNEMA, <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-300 to-yellow-500">
-               SIXNEMA SMP MUHAMMADIYAH 6 SURABAYA.
+              SMP MUHAMMADIYAH 6 SURABAYA.
               </span>
             </h2>
             <p className="text-gray-300 text-base sm:text-lg leading-relaxed max-w-xl">
-              Sistem manajemen terpadu ekstrakurikuler Fotografi & Videografi SMP Muhammadiyah 6 Surabaya. Absensi cepat, penilaian objektif (Teori 40% + Karya 60%), jurnal pengajaran, dan Website sistem Management terpadu ekstrakurikuler & Sinematografi SMP Muhammadiyah 6 Surabaya, Jurnal, Absensi dan Karya semua terintegrasi dengan baik melalui Aplikasi SixnemaApps.
+              Sistem manajemen terpadu ekstrakurikuler Fotografi & Videografi SMP Muhammadiyah 6 Surabaya. Absensi, jurnal pengajaran, dan Website sistem Management terpadu ekstrakurikuler & Sinematografi SMP Muhammadiyah 6 Surabaya, Jurnal, Absensi dan Karya semua terintegrasi dengan baik melalui Aplikasi SixnemaApps.
             </p>
 
             <div className="pt-4">
