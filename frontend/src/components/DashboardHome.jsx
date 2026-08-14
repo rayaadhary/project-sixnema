@@ -34,7 +34,7 @@ export default function DashboardHome({ currentUser, students, artworks, journal
   };
 
   const roleIntro = {
-    pembina: 'Kelola absensi cepat, jurnal mengajaran, dan input nilai teori (40%) serta karya (60%) dengan mudah.',
+    pembina: '',
     siswa: 'Unggah tautan karya fotografi & videografimu, pantau nilai rapor harian, dan lihat catatan personal dari pembina.',
     waka: 'Pantau laporan seluruh pembina ekskul, rekapitulasi nilai siswa, dan berikan feedback langsung secara real-time.',
   };
