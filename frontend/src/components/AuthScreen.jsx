@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, Sparkles, Shield, GraduationCap, LogIn, UserPlus } from 'lucide-react';
+import { Camera, Sparkles, Shield, GraduationCap, LogIn, UserPlus, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../lib/api';
 
@@ -7,6 +7,12 @@ const ROLES = [
   { value: 'siswa', label: 'Siswa' },
   { value: 'pembina', label: 'Pembina' },
   { value: 'waka', label: 'Waka Kesiswaan' },
+];
+
+const ROLE_INFO = [
+  { label: 'Pembina', sub: 'Adek Dharma Santoso, S.I.Kom, M.AP', Icon: UserCheck },
+  { label: 'Siswa', sub: 'Wali Murid / Siswa', Icon: GraduationCap },
+  { label: 'Waka Kesiswaan', sub: 'Afika Amalia, S.Pd, Gr', Icon: Shield },
 ];
 
 export default function AuthScreen({ onAuthenticated }) {
@@ -98,13 +104,19 @@ export default function AuthScreen({ onAuthenticated }) {
             <p className="text-gray-300 text-base sm:text-lg leading-relaxed max-w-xl">
               Sistem manajemen terpadu ekstrakurikuler Fotografi & Videografi SMP Muhammadiyah 6 Surabaya. Absensi, jurnal pengajaran, dan Website sistem Management terpadu ekstrakurikuler & Sinematografi SMP Muhammadiyah 6 Surabaya, Jurnal, Absensi dan Karya semua terintegrasi dengan baik melalui Aplikasi SixnemaApps.
             </p>
-            <div className="pt-4 flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-gray-900/80 border border-yellow-500/30 text-yellow-400">
-                <GraduationCap className="w-6 h-6" />
+            <div className="pt-4">
+              <p className="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-3">Peran Pengguna</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {ROLE_INFO.map(({ label, sub, Icon }) => (
+                  <div key={label} className="p-4 rounded-xl bg-gray-900/80 border border-yellow-500/30">
+                    <div className="p-2 rounded-lg bg-yellow-500/10 text-yellow-400 w-fit mb-2">
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <div className="font-bold text-white text-sm">{label}</div>
+                    <div className="text-xs text-gray-400 mt-0.5">{sub}</div>
+                  </div>
+                ))}
               </div>
-              <p className="text-sm text-gray-400 max-w-md">
-                Punya akun? Masuk untuk melanjutkan. Belum punya? Daftar dengan memilih peran.
-              </p>
             </div>
           </div>
 
