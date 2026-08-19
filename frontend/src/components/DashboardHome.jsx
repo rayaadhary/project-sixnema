@@ -45,7 +45,7 @@ export default function DashboardHome({ currentUser, students, artworks, journal
         <div className="absolute right-0 top-0 bottom-0 w-1/3 opacity-20 hidden lg:block bg-cover bg-center" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1513031300226-c8fb12de9ade')` }}></div>
         <div className="relative z-10 max-w-2xl space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs font-medium">
-            <Sparkles className="w-3.5 h-3.5" /> Ekskul Unggulan SMP Musix 2026
+            <Sparkles className="w-3.5 h-3.5" /> Ekstrakurikuler Fotografi & Videografi
           </div>
           <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
             Selamat Datang, <span className="text-yellow-400">{currentUser.name}</span>!
