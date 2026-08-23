@@ -166,6 +166,27 @@ export default function DashboardHome({ currentUser, students, artworks, journal
             </div>
           </div>
 
+          <div className="bg-[#111827] border border-gray-800 rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-yellow-400" /> Jurnal Terbaru
+              </h3>
+            </div>
+            <div className="max-h-[480px] overflow-y-auto pr-1 space-y-2">
+              {journals.map((j) => (
+                <div key={j.id} className="bg-gray-900 border border-gray-800 rounded-xl px-3 py-2.5 hover:border-gray-700 transition-all">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 font-mono">{j.date}</span>
+                    <h4 className="text-xs font-semibold text-white truncate">{j.topic}</h4>
+                  </div>
+                  <p className="text-[11px] text-gray-400 line-clamp-1">{j.summary}</p>
+                  {j.attendance_summary && <p className="text-[10px] text-gray-500 mt-0.5 font-mono">{j.attendance_summary}</p>}
+                </div>
+              ))}
+              {journals.length === 0 && <p className="text-xs text-gray-400 py-2">Belum ada jurnal.</p>}
+            </div>
+          </div>
+
           <div className="bg-gradient-to-br from-yellow-500/10 via-gray-900 to-[#111827] border border-yellow-500/30 rounded-2xl p-6">
             <h3 className="text-sm font-bold text-yellow-400 mb-2">SMP Muhammadiyah 6 Surabaya</h3>
             <p className="text-xs text-gray-300 leading-relaxed mb-4">
