@@ -32,13 +32,13 @@ export default function WakaPantau({ currentUser, students, feedback, onFeedback
             <p className="text-xs text-gray-400 mt-1">Pengawasan langsung program ekstrakurikuler SMP Muhammadiyah 6 Surabaya</p>
           </div>
           <div className="bg-yellow-500/10 border border-yellow-500/30 px-4 py-2 rounded-xl text-yellow-400 text-xs font-mono">
-            Status: Operasional Lancar (Akreditasi A)
+            Status: (Akreditasi A)
           </div>
         </div>
 
         <form onSubmit={send} className="bg-gray-900 p-5 rounded-xl border border-gray-800 space-y-4">
           <h4 className="text-sm font-bold text-white flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-yellow-400" /> Berikan Feedback Langsung ke Pembina (Ustadz Arifin)
+            <MessageSquare className="w-4 h-4 text-yellow-400" /> Berikan Feedback Langsung ke Pembina (Adek Dharma Santoso, S.I.Kom, M.AP)
           </h4>
           <div className="flex gap-3">
             <input
