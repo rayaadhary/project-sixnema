@@ -4,7 +4,7 @@
 Aplikasi "sixnema" untuk ekstrakurikuler fotografi & videografi SMP Muhammadiyah 6 Surabaya dengan 3 peran (Pembina, Siswa, Waka Kesiswaan). Fitur: absensi cepat, jurnal pengajaran, input nilai (Teori 40% + Karya 60%), catatan siswa, upload link karya, feedback Waka, grafik perkembangan nilai, ranking otomatis. Tema gelap dengan aksen kuning.
 
 ## User Personas
-- **Pembina** (Ustadz Arifin): kelola absensi, jurnal, nilai, siswa, lihat grafik & ekspor rekap.
+- **Pembina** (Adek Dharma Santoso, S.I.Kom, M.AP): kelola absensi, jurnal, nilai, siswa, lihat grafik & ekspor rekap.
 - **Siswa** (Ahmad Zaki + 14 lainnya): kirim link karya, lihat rapor + grafik perkembangan pribadi.
 - **Waka Kesiswaan** (Drs. H. M. Fauzi): pantau laporan, kirim feedback, ekspor rekap, lihat riwayat absensi.
 

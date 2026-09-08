@@ -10,11 +10,12 @@ from typing import Any, Dict, List, Optional
 
 import bcrypt
 import jwt
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, UploadFile, File
+from fastapi.responses import StreamingResponse, Response as RawResponse
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field
 from starlette.middleware.cors import CORSMiddleware
+from gridfs import AsyncIOMotorGridFSBucket
 
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
 DB_NAME = os.environ.get("DB_NAME", "sixnema")
@@ -373,6 +374,52 @@ async def export_journals(user=Depends(require_roles("pembina", "waka"))):
     for j in journals:
         rows.append([j.get("date", ""), j.get("topic", ""), j.get("summary", ""), j.get("attendance_summary", "")])
     return stream_csv(rows, "sixnema-jurnal.csv")
+
+# ---------- Media (Flipbook) ----------
+FLIPBOOK_KEY = "flipbook-active"
+
+async def _get_flipbook_bucket():
+    return AsyncIOMotorGridFSBucket(db)
+
+@api.get("/media/flipbook")
+async def get_flipbook():
+    bucket = await _get_flipbook_bucket()
+    cursor = bucket.find({"filename": FLIPBOOK_KEY}, sort=[("uploadDate", -1)])
+    files = await cursor.to_list(1)
+    if not files:
+        raise HTTPException(404, "Belum ada flipbook")
+    file = files[0]
+    stream = bucket.open_download_stream(file["_id"])
+    data = await stream.read()
+    return RawResponse(content=data, media_type="application/pdf",
+                       headers={"Content-Disposition": f'inline; filename="{file.filename}.pdf"',
+                                "Cache-Control": "public, max-age=3600"})
+
+@api.post("/media/flipbook")
+async def upload_flipbook(file: UploadFile = File(...), user=Depends(require_roles("pembina", "waka"))):
+    content = await file.read()
+    if len(content) > 15 * 1024 * 1024:
+        raise HTTPException(413, "File terlalu besar, maksimal 15MB")
+    bucket = await _get_flipbook_bucket()
+    old = await bucket.find({"filename": FLIPBOOK_KEY}).to_list(10)
+    for f in old:
+        await bucket.delete(f["_id"])
+    await bucket.upload_from_stream(
+        FLIPBOOK_KEY, iter([content]),
+        metadata={"content_type": "application/pdf", "uploaded_by": user["id"],
+                  "original_name": file.filename, "size": len(content), "uploaded_at": now_iso()},
+    )
+    return {"ok": True, "filename": file.filename, "size": len(content)}
+
+@api.delete("/media/flipbook")
+async def delete_flipbook(user=Depends(require_roles("pembina", "waka"))):
+    bucket = await _get_flipbook_bucket()
+    old = await bucket.find({"filename": FLIPBOOK_KEY}).to_list(10)
+    if not old:
+        raise HTTPException(404, "Tidak ada flipbook untuk dihapus")
+    for f in old:
+        await bucket.delete(f["_id"])
+    return {"ok": True}
 
 app.include_router(api)
 app.add_middleware(CORSMiddleware, allow_origins=[FRONTEND_ORIGIN], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])

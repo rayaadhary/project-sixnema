@@ -39,4 +39,17 @@ export const api = {
 
   listAttendance: () => request('/attendance'),
   saveAttendance: (payload) => request('/attendance', { method: 'POST', body: JSON.stringify(payload) }),
+
+  getFlipbookUrl: () => `${BASE}/media/flipbook`,
+  uploadFlipbook: async (file) => {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch(`${BASE}/media/flipbook`, { method: 'POST', credentials: 'include', body: form });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      throw new Error(d.detail || `Upload gagal (${res.status})`);
+    }
+    return res.json();
+  },
+  deleteFlipbook: () => request('/media/flipbook', { method: 'DELETE' }),
 };

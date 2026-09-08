@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, Sparkles, Shield, GraduationCap, LogIn, UserPlus, UserCheck } from 'lucide-react';
+import { Camera, Sparkles, Shield, GraduationCap, LogIn, UserPlus, UserCheck, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../lib/api';
 
@@ -86,6 +86,10 @@ export default function AuthScreen({ onAuthenticated }) {
           <span className="flex items-center gap-1.5"><Shield className="w-4 h-4 text-yellow-400" /> Akreditasi A</span>
           <span>•</span>
           <span>Karang Pilang, Surabaya</span>
+          <span>•</span>
+          <a href="/flipbook" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-yellow-400 hover:text-yellow-300 transition-colors font-medium">
+            <BookOpen className="w-4 h-4" /> Majalah
+          </a>
         </div>
       </header>
 

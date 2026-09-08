@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Shield, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../lib/api';
+import FlipbookUpload from '../FlipbookUpload';
 
 export default function WakaPantau({ currentUser, students, feedback, onFeedbackAdded }) {
   const [text, setText] = useState('');
@@ -101,6 +102,8 @@ export default function WakaPantau({ currentUser, students, feedback, onFeedback
           </table>
         </div>
       </div>
+
+      <FlipbookUpload />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { PembinaAbsensi, PembinaJurnal, PembinaSiswa } from './components/dashbo
 import { SiswaKarya, SiswaRapor } from './components/dashboards/SiswaDashboard';
 import WakaPantau from './components/dashboards/WakaDashboard';
 import AttendanceHistory from './components/AttendanceHistory';
+import FlipbookViewer from './components/FlipbookViewer';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -54,6 +55,10 @@ export default function App() {
     setJournals([]);
     setFeedback([]);
   };
+
+  if (window.location.pathname === '/flipbook') {
+    return <FlipbookViewer />;
+  }
 
   if (checkingSession) {
     return (
