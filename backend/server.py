@@ -15,7 +15,7 @@ from fastapi.responses import StreamingResponse, Response as RawResponse
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field
 from starlette.middleware.cors import CORSMiddleware
-from gridfs import AsyncIOMotorGridFSBucket
+from motor.motor_gridfs import AsyncIOMotorGridFSBucket
 
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
 DB_NAME = os.environ.get("DB_NAME", "sixnema")

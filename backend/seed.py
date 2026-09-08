@@ -24,7 +24,7 @@ async def seed_flipbook() -> None:
     if not PDF_PATH.exists():
         print(f"[flipbook] PDF tidak ditemukan: {PDF_PATH}")
         return
-    from gridfs import AsyncIOMotorGridFSBucket
+    from motor.motor_gridfs import AsyncIOMotorGridFSBucket
     bucket = AsyncIOMotorGridFSBucket(db)
     old = await bucket.find({"filename": FLIPBOOK_KEY}).to_list(10)
     if old:
