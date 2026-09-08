@@ -19,7 +19,7 @@ from starlette.middleware.cors import CORSMiddleware
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
 DB_NAME = os.environ.get("DB_NAME", "sixnema")
 JWT_SECRET = os.environ.get("JWT_SECRET", "dev-secret-change-me")
-FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "http://localhost:3000")
+FRONTEND_ORIGINS = [o.strip() for o in os.environ.get("FRONTEND_ORIGIN", "http://localhost:3000").split(",")]
 # ponytail: motor client is lazy (no I/O until first query), so module-level is fine for serverless cold starts.
 client = AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]
@@ -571,4 +571,4 @@ async def delete_comment(comment_id: str, user=Depends(require_roles("pembina", 
     return {"ok": True}
 
 app.include_router(api)
-app.add_middleware(CORSMiddleware, allow_origins=[FRONTEND_ORIGIN], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=FRONTEND_ORIGINS, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
