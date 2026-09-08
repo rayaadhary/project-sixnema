@@ -15,7 +15,6 @@ from fastapi.responses import StreamingResponse, Response as RawResponse
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_gridfs import AsyncIOMotorGridFSBucket
 
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
 DB_NAME = os.environ.get("DB_NAME", "sixnema")
@@ -377,22 +376,45 @@ async def export_journals(user=Depends(require_roles("pembina", "waka"))):
 
 # ---------- Media (Flipbook) ----------
 FLIPBOOK_KEY = "flipbook-active"
+CHUNK_SIZE = 255 * 1024  # 255KB per chunk (GridFS standard)
 
-async def _get_flipbook_bucket():
-    return AsyncIOMotorGridFSBucket(db)
+async def _upload_pdf(data: bytes, filename: str, uploaded_by: str):
+    import hashlib
+    from bson import ObjectId
+    await db.fs.chunks.delete_many({"files_id": FLIPBOOK_KEY})
+    await db.fs.files.delete_one({"_id": FLIPBOOK_KEY})
+    chunks = [data[i:i+CHUNK_SIZE] for i in range(0, len(data), CHUNK_SIZE)] or [b""]
+    for idx, chunk in enumerate(chunks):
+        await db.fs.chunks.insert_one({"files_id": FLIPBOOK_KEY, "n": idx, "data": chunk})
+    await db.fs.files.insert_one({
+        "_id": FLIPBOOK_KEY, "filename": filename, "length": len(data),
+        "chunkSize": CHUNK_SIZE, "uploadDate": now_iso(),
+        "metadata": {"content_type": "application/pdf", "uploaded_by": uploaded_by,
+                     "original_name": filename, "size": len(data)},
+    })
+
+async def _download_pdf() -> bytes:
+    file_doc = await db.fs.files.find_one({"_id": FLIPBOOK_KEY})
+    if not file_doc:
+        return b""
+    cursor = db.fs.chunks.find({"files_id": FLIPBOOK_KEY}).sort("n", 1)
+    chunks = [c["data"] async for c in cursor]
+    return b"".join(chunks) if chunks else b""
+
+async def _delete_pdf():
+    await db.fs.chunks.delete_many({"files_id": FLIPBOOK_KEY})
+    deleted = await db.fs.files.delete_one({"_id": FLIPBOOK_KEY})
+    return deleted.deleted_count > 0
 
 @api.get("/media/flipbook")
 async def get_flipbook():
-    bucket = await _get_flipbook_bucket()
-    cursor = bucket.find({"filename": FLIPBOOK_KEY}, sort=[("uploadDate", -1)])
-    files = await cursor.to_list(1)
-    if not files:
+    data = await _download_pdf()
+    if not data:
         raise HTTPException(404, "Belum ada flipbook")
-    file = files[0]
-    stream = bucket.open_download_stream(file["_id"])
-    data = await stream.read()
+    file_doc = await db.fs.files.find_one({"_id": FLIPBOOK_KEY})
+    name = (file_doc or {}).get("filename", "flipbook")
     return RawResponse(content=data, media_type="application/pdf",
-                       headers={"Content-Disposition": f'inline; filename="{file.filename}.pdf"',
+                       headers={"Content-Disposition": f'inline; filename="{name}"',
                                 "Cache-Control": "public, max-age=3600"})
 
 @api.post("/media/flipbook")
@@ -400,25 +422,13 @@ async def upload_flipbook(file: UploadFile = File(...), user=Depends(require_rol
     content = await file.read()
     if len(content) > 15 * 1024 * 1024:
         raise HTTPException(413, "File terlalu besar, maksimal 15MB")
-    bucket = await _get_flipbook_bucket()
-    old = await bucket.find({"filename": FLIPBOOK_KEY}).to_list(10)
-    for f in old:
-        await bucket.delete(f["_id"])
-    await bucket.upload_from_stream(
-        FLIPBOOK_KEY, iter([content]),
-        metadata={"content_type": "application/pdf", "uploaded_by": user["id"],
-                  "original_name": file.filename, "size": len(content), "uploaded_at": now_iso()},
-    )
+    await _upload_pdf(content, file.filename or "flipbook.pdf", user["id"])
     return {"ok": True, "filename": file.filename, "size": len(content)}
 
 @api.delete("/media/flipbook")
 async def delete_flipbook(user=Depends(require_roles("pembina", "waka"))):
-    bucket = await _get_flipbook_bucket()
-    old = await bucket.find({"filename": FLIPBOOK_KEY}).to_list(10)
-    if not old:
+    if not await _delete_pdf():
         raise HTTPException(404, "Tidak ada flipbook untuk dihapus")
-    for f in old:
-        await bucket.delete(f["_id"])
     return {"ok": True}
 
 app.include_router(api)
