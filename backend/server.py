@@ -428,8 +428,8 @@ async def get_flipbook():
 @api.post("/media/flipbook")
 async def upload_flipbook(file: UploadFile = File(...), user=Depends(require_roles("pembina", "waka"))):
     content = await file.read()
-    if len(content) > 15 * 1024 * 1024:
-        raise HTTPException(413, "File terlalu besar, maksimal 15MB")
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(413, "File terlalu besar, maksimal 10MB")
     await _upload_pdf(content, file.filename or "flipbook.pdf", user["id"])
     return {"ok": True, "filename": file.filename, "size": len(content)}
 
@@ -440,35 +440,6 @@ async def delete_flipbook(user=Depends(require_roles("pembina", "waka"))):
     return {"ok": True}
 
 # ---------- Magazines ----------
-CHUNK_SIZE_MEDIA = 255 * 1024
-
-async def _upload_magazine_pdf(data: bytes, filename: str, magazine_id: str):
-    import hashlib
-    file_id = f"mag-{magazine_id}"
-    await db.fs.chunks.delete_many({"files_id": file_id})
-    await db.fs.files.delete_one({"_id": file_id})
-    chunks = [data[i:i+CHUNK_SIZE_MEDIA] for i in range(0, len(data), CHUNK_SIZE_MEDIA)] or [b""]
-    for idx, chunk in enumerate(chunks):
-        await db.fs.chunks.insert_one({"files_id": file_id, "n": idx, "data": chunk})
-    await db.fs.files.insert_one({
-        "_id": file_id, "filename": filename, "length": len(data),
-        "chunkSize": CHUNK_SIZE_MEDIA, "uploadDate": now_iso(),
-        "metadata": {"content_type": "application/pdf", "size": len(data)},
-    })
-
-async def _download_magazine_pdf(magazine_id: str) -> bytes:
-    file_id = f"mag-{magazine_id}"
-    file_doc = await db.fs.files.find_one({"_id": file_id})
-    if not file_doc:
-        return b""
-    cursor = db.fs.chunks.find({"files_id": file_id}).sort("n", 1)
-    chunks = [c["data"] async for c in cursor]
-    return b"".join(chunks) if chunks else b""
-
-async def _delete_magazine_pdf(magazine_id: str):
-    file_id = f"mag-{magazine_id}"
-    await db.fs.chunks.delete_many({"files_id": file_id})
-    await db.fs.files.delete_one({"_id": file_id})
 
 @api.get("/magazines")
 async def list_magazines():
@@ -488,37 +459,36 @@ async def get_magazine(magazine_id: str):
         raise HTTPException(404, "Majalah tidak ditemukan")
     return mag
 
+class MagazineInput(BaseModel):
+    title: str
+    description: str = ""
+    pdf_url: str = ""
+
 @api.post("/magazines")
-async def create_magazine(title: str = Form(...), description: str = Form(""), file: UploadFile = File(...), user=Depends(require_roles("pembina", "waka"))):
-    content = await file.read()
-    if len(content) > 15 * 1024 * 1024:
-        raise HTTPException(413, "File terlalu besar, maksimal 15MB")
+async def create_magazine(payload: MagazineInput, user=Depends(require_roles("pembina", "waka"))):
+    if not payload.pdf_url:
+        raise HTTPException(400, "pdf_url wajib diisi")
     magazine_id = str(uuid.uuid4())
     magazine = {
         "id": magazine_id,
-        "title": title,
-        "description": description,
-        "filename": file.filename or "majalah.pdf",
+        "title": payload.title,
+        "description": payload.description,
+        "pdf_url": payload.pdf_url,
         "published_at": now_iso(),
         "created_by": user["id"],
     }
     await db.magazines.insert_one(magazine)
-    await _upload_magazine_pdf(content, file.filename or "majalah.pdf", magazine_id)
     magazine.pop("_id", None)
     return magazine
 
 @api.put("/magazines/{magazine_id}")
-async def update_magazine(magazine_id: str, title: str = Form(...), description: str = Form(""), file: Optional[UploadFile] = File(None), user=Depends(require_roles("pembina", "waka"))):
+async def update_magazine(magazine_id: str, payload: MagazineInput, user=Depends(require_roles("pembina", "waka"))):
     existing = await db.magazines.find_one({"id": magazine_id}, {"_id": 0})
     if not existing:
         raise HTTPException(404, "Majalah tidak ditemukan")
-    update_data = {"title": title, "description": description}
-    if file:
-        content = await file.read()
-        if len(content) > 15 * 1024 * 1024:
-            raise HTTPException(413, "File terlalu besar, maksimal 15MB")
-        update_data["filename"] = file.filename or "majalah.pdf"
-        await _upload_magazine_pdf(content, file.filename or "majalah.pdf", magazine_id)
+    update_data = {"title": payload.title, "description": payload.description}
+    if payload.pdf_url:
+        update_data["pdf_url"] = payload.pdf_url
     await db.magazines.update_one({"id": magazine_id}, {"$set": update_data})
     return await db.magazines.find_one({"id": magazine_id}, {"_id": 0})
 
@@ -527,20 +497,22 @@ async def delete_magazine(magazine_id: str, user=Depends(require_roles("pembina"
     result = await db.magazines.delete_one({"id": magazine_id})
     if result.deleted_count == 0:
         raise HTTPException(404, "Majalah tidak ditemukan")
-    await _delete_magazine_pdf(magazine_id)
     await db.comments.delete_many({"magazine_id": magazine_id})
     return {"ok": True}
 
 @api.get("/magazines/{magazine_id}/pdf")
 async def get_magazine_pdf(magazine_id: str):
+    mag = await db.magazines.find_one({"id": magazine_id}, {"_id": 0})
+    if not mag:
+        raise HTTPException(404, "Majalah tidak ditemukan")
+    if mag.get("pdf_url"):
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url=mag["pdf_url"])
     data = await _download_magazine_pdf(magazine_id)
     if not data:
         raise HTTPException(404, "PDF majalah tidak ditemukan")
-    mag = await db.magazines.find_one({"id": magazine_id}, {"_id": 0})
-    name = (mag or {}).get("filename", "majalah.pdf")
     return RawResponse(content=data, media_type="application/pdf",
-                       headers={"Content-Disposition": f'inline; filename="{name}"',
-                                "Cache-Control": "public, max-age=3600"})
+                       headers={"Cache-Control": "public, max-age=3600"})
 
 # ---------- Comments ----------
 @api.get("/magazines/{magazine_id}/comments")
