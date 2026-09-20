@@ -464,6 +464,12 @@ class MagazineInput(BaseModel):
     description: str = ""
     pdf_url: str = ""
 
+class TrackEvent(BaseModel):
+    kind: str
+
+class CommentModerate(BaseModel):
+    status: str
+
 @api.post("/magazines")
 async def create_magazine(payload: MagazineInput, user=Depends(require_roles("pembina", "waka"))):
     if not payload.pdf_url:
@@ -474,6 +480,8 @@ async def create_magazine(payload: MagazineInput, user=Depends(require_roles("pe
         "title": payload.title,
         "description": payload.description,
         "pdf_url": payload.pdf_url,
+        "visits": 0,
+        "reads": 0,
         "published_at": now_iso(),
         "created_by": user["id"],
     }
@@ -500,6 +508,22 @@ async def delete_magazine(magazine_id: str, user=Depends(require_roles("pembina"
     await db.comments.delete_many({"magazine_id": magazine_id})
     return {"ok": True}
 
+@api.post("/magazines/{magazine_id}/track")
+async def track_magazine(magazine_id: str, payload: TrackEvent):
+    if payload.kind not in ("visit", "read"):
+        raise HTTPException(400, "kind harus visit atau read")
+    field = "visits" if payload.kind == "visit" else "reads"
+    result = await db.magazines.update_one({"id": magazine_id}, {"$inc": {field: 1}})
+    if result.matched_count == 0:
+        raise HTTPException(404, "Majalah tidak ditemukan")
+    await db.magazine_events.insert_one({
+        "id": str(uuid.uuid4()),
+        "magazine_id": magazine_id,
+        "kind": payload.kind,
+        "created_at": now_iso(),
+    })
+    return {"ok": True}
+
 @api.get("/magazines/{magazine_id}/pdf")
 async def get_magazine_pdf(magazine_id: str):
     mag = await db.magazines.find_one({"id": magazine_id}, {"_id": 0})
@@ -514,10 +538,86 @@ async def get_magazine_pdf(magazine_id: str):
     return RawResponse(content=data, media_type="application/pdf",
                        headers={"Cache-Control": "public, max-age=3600"})
 
+# ---------- Analytics ----------
+def _period_window(period: str):
+    now = datetime.now(timezone.utc)
+    if period == "month":
+        return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0), "Bulan ini"
+    if period == "three_months":
+        return now - timedelta(days=90), "3 bulan terakhir"
+    if period == "semester":
+        semester_month = 1 if now.month <= 6 else 7
+        return now.replace(month=semester_month, day=1, hour=0, minute=0, second=0, microsecond=0), "Semester berjalan"
+    return None, "Semua waktu"
+
+@api.get("/analytics")
+async def get_analytics(period: str = "all", user=Depends(require_roles("pembina", "waka"))):
+    start, period_label = _period_window(period)
+    issues = await db.magazines.find().sort("created_at", -1).to_list(100)
+    events_by_issue: Dict[str, Dict[str, int]] = {}
+    if start is not None:
+        events = await db.magazine_events.find({"created_at": {"$gte": start.isoformat()}}).to_list(10000)
+        for event in events:
+            counts = events_by_issue.setdefault(event["magazine_id"], {"visit": 0, "read": 0})
+            counts[event["kind"]] = counts.get(event["kind"], 0) + 1
+
+    issue_stats = []
+    for issue in issues:
+        if start is None:
+            visits = issue.get("visits", 0)
+            reads = issue.get("reads", 0)
+            comment_filter = {"magazine_id": issue["id"]}
+        else:
+            visits = events_by_issue.get(issue["id"], {}).get("visit", 0)
+            reads = events_by_issue.get(issue["id"], {}).get("read", 0)
+            comment_filter = {"magazine_id": issue["id"], "created_at": {"$gte": start.isoformat()}}
+        comment_count = await db.comments.count_documents(comment_filter)
+        issue_stats.append({"id": issue["id"], "title": issue.get("title", "Edisi"), "visits": visits, "reads": reads, "comments": comment_count})
+
+    return {
+        "period": period,
+        "period_label": period_label,
+        "total_visitors": sum(item["visits"] for item in issue_stats),
+        "total_reads": sum(item["reads"] for item in issue_stats),
+        "published_issues": await db.magazines.count_documents({}),
+        "pending_comments": await db.comments.count_documents({"status": "hidden"}),
+        "issues": issue_stats,
+    }
+
+@api.get("/analytics/export.csv")
+async def export_analytics(period: str = "all", user=Depends(require_roles("pembina", "waka"))):
+    start, _ = _period_window(period)
+    issues = await db.magazines.find().sort("created_at", -1).to_list(100)
+    events_by_issue: Dict[str, Dict[str, int]] = {}
+    if start is not None:
+        events = await db.magazine_events.find({"created_at": {"$gte": start.isoformat()}}).to_list(10000)
+        for event in events:
+            counts = events_by_issue.setdefault(event["magazine_id"], {"visit": 0, "read": 0})
+            counts[event["kind"]] = counts.get(event["kind"], 0) + 1
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["judul", "kunjungan", "pembaca", "komentar"])
+    for issue in issues:
+        if start is None:
+            visits = issue.get("visits", 0)
+            reads = issue.get("reads", 0)
+        else:
+            visits = events_by_issue.get(issue["id"], {}).get("visit", 0)
+            reads = events_by_issue.get(issue["id"], {}).get("read", 0)
+        comment_count = await db.comments.count_documents({"magazine_id": issue["id"]})
+        writer.writerow([issue.get("title", ""), visits, reads, comment_count])
+
+    return StreamingResponse(
+        iter([buf.getvalue()]),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=sittah-analytics.csv"},
+    )
+
 # ---------- Comments ----------
 @api.get("/magazines/{magazine_id}/comments")
 async def list_comments(magazine_id: str):
-    return await db.comments.find({"magazine_id": magazine_id}, {"_id": 0}).sort("created_at", 1).to_list(200)
+    return await db.comments.find({"magazine_id": magazine_id, "status": "visible"}, {"_id": 0}).sort("created_at", 1).to_list(200)
 
 @api.post("/magazines/{magazine_id}/comments")
 async def add_comment(magazine_id: str, payload: CommentInput):
@@ -529,10 +629,32 @@ async def add_comment(magazine_id: str, payload: CommentInput):
         "magazine_id": magazine_id,
         "author_name": payload.author_name,
         "text": payload.text,
+        "status": "visible",
         "created_at": now_iso(),
     }
     await db.comments.insert_one(comment)
     comment.pop("_id", None)
+    return comment
+
+@api.get("/comments")
+async def list_all_comments(user=Depends(require_roles("pembina", "waka"))):
+    cursor = db.comments.find({}, {"_id": 0}).sort("created_at", -1)
+    comments = await cursor.to_list(300)
+    magazine_ids = list({c["magazine_id"] for c in comments})
+    magazines = await db.magazines.find({"id": {"$in": magazine_ids}}, {"_id": 0, "id": 1, "title": 1}).to_list(100)
+    title_map = {m["id"]: m.get("title", "") for m in magazines}
+    for c in comments:
+        c["magazine_title"] = title_map.get(c["magazine_id"], "")
+    return comments
+
+@api.patch("/comments/{comment_id}")
+async def moderate_comment(comment_id: str, payload: CommentModerate, user=Depends(require_roles("pembina", "waka"))):
+    if payload.status not in ("visible", "hidden"):
+        raise HTTPException(400, "status harus visible atau hidden")
+    result = await db.comments.update_one({"id": comment_id}, {"$set": {"status": payload.status}})
+    if result.matched_count == 0:
+        raise HTTPException(404, "Komentar tidak ditemukan")
+    comment = await db.comments.find_one({"id": comment_id}, {"_id": 0})
     return comment
 
 @api.delete("/comments/{comment_id}")
